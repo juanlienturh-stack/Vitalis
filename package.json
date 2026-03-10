@@ -1,16 +1,11 @@
 {
-  "name": "vitalis-ai",
-  "version": "1.0.0",
-  "description": "Vitalis AI - Asistente personal de salud y fitness",
-  "main": "index.html",
-  "scripts": {
-    "start": "serve . -l 5000 --no-clipboard"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@replit/connectors-sdk": "^0.2.0",
-    "serve": "^14.2.6"
-  }
-}
+  "expo": {
+    "name": "Vitalis AI",
+    "slug": "vitalis-ai",
+    "owner": "gatotacticocat",
+    "extra": {
+      "eas": {
+        "projectId": "968e5777-0456-4013-a3fd-56692d2690b5"
+      }
+    },
+    "version": "1.0.0",
