@@ -1,0 +1,16 @@
+{
+  "name": "vitalis-ai",
+  "version": "1.0.0",
+  "description": "Vitalis AI - Asistente personal de salud y fitness",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve . -l 5000 --no-clipboard"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@replit/connectors-sdk": "^0.2.0",
+    "serve": "^14.2.6"
+  }
+}
