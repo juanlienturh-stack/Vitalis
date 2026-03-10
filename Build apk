@@ -27,5 +27,17 @@ jobs:
       - name: Install dependencies
         run: npm ci || npm install
 
+      - name: Configure EAS project
+        run: |
+          node -e "
+          const fs = require('fs');
+          const app = JSON.parse(fs.readFileSync('app.json','utf8'));
+          if (!app.expo.extra) app.expo.extra = {};
+          if (!app.expo.extra.eas) app.expo.extra.eas = {};
+          app.expo.extra.eas.projectId = '968e5777-0456-4013-a3fd-56692d2690b5';
+          app.expo.owner = 'gatotacticocat';
+          fs.writeFileSync('app.json', JSON.stringify(app, null, 2));
+          "
+
       - name: Build APK
         run: eas build -p android --profile preview --non-interactive --no-wait
