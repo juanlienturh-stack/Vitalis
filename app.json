@@ -1,0 +1,85 @@
+{
+  "expo": {
+    "name": "Vitalis AI",
+    "slug": "vitalis-ai",
+    "owner": "gatotacticocat",
+    "extra": {
+      "eas": {
+        "projectId": "968e5777-0456-4013-a3fd-56692d2690b5"
+      }
+    },
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "vitalisai",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0A0F"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.vitalisai.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Vitalis AI necesita la cámara para el escaneo corporal y análisis facial.",
+        "NSPhotoLibraryUsageDescription": "Vitalis AI necesita acceso a tus fotos para análisis.",
+        "NSMotionUsageDescription": "Vitalis AI usa el acelerómetro para contar tus pasos.",
+        "NSHealthShareUsageDescription": "Vitalis AI puede leer tus datos de salud para recomendaciones personalizadas.",
+        "NSHealthUpdateUsageDescription": "Vitalis AI puede guardar tus entrenamientos en Health."
+      }
+    },
+    "android": {
+      "package": "com.vitalisai.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0A0F",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACTIVITY_RECOGNITION",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "VIBRATE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://replit.com/"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Vitalis AI necesita acceso a tus fotos para analizar tu cuerpo y cara.",
+          "cameraPermission": "Vitalis AI necesita la cámara para el escaneo corporal y análisis facial."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Vitalis AI necesita tu ubicación para el contador de pasos GPS.",
+          "locationWhenInUsePermission": "Vitalis AI necesita tu ubicación para el contador de pasos GPS."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

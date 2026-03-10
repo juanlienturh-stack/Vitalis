@@ -30,4 +30,5 @@ jobs:
       - name: Build APK
         run: |
           node -e "var f=require('fs'),a=JSON.parse(f.readFileSync('app.json','utf8'));a.expo.owner='gatotacticocat';a.expo.extra=a.expo.extra||{};a.expo.extra.eas={projectId:'968e5777-0456-4013-a3fd-56692d2690b5'};f.writeFileSync('app.json',JSON.stringify(a,null,2))"
+          cat app.json | head -15
           eas build -p android --profile preview --non-interactive --no-wait
