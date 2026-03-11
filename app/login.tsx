@@ -125,9 +125,7 @@ export default function LoginScreen({ onAuth }: Props) {
     }
   };
 
-  const canSubmit = mode === "login"
-    ? username.trim().length >= 3
-    : username.trim().length >= 3 && usernameStatus === "available";
+  const canSubmit = username.trim().length >= 3 && usernameStatus !== "taken";
 
   return (
     <View style={styles.container}>

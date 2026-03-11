@@ -198,6 +198,13 @@ function configureExpoAndLanding(app: express.Application) {
     next();
   });
 
+  app.get("/download-code", (_req, res) => {
+    const filePath = path.resolve(process.cwd(), "public/vitalis-ai-complete.tar.gz");
+    res.setHeader("Content-Type", "application/gzip");
+    res.setHeader("Content-Disposition", "attachment; filename=vitalis-ai-complete.tar.gz");
+    res.sendFile(filePath);
+  });
+
   app.use("/assets", express.static(path.resolve(process.cwd(), "assets")));
   app.use("/public", express.static(path.resolve(process.cwd(), "public")));
   app.use(express.static(path.resolve(process.cwd(), "static-build")));

@@ -9,6 +9,7 @@ jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,8 +28,28 @@ jobs:
       - name: Install dependencies
         run: npm ci || npm install
 
-      - name: Build APK
+      - name: Configure project
         run: |
-          node -e "var f=require('fs'),a=JSON.parse(f.readFileSync('app.json','utf8'));a.expo.owner='gatotacticocat';a.expo.extra=a.expo.extra||{};a.expo.extra.eas={projectId:'968e5777-0456-4013-a3fd-56692d2690b5'};f.writeFileSync('app.json',JSON.stringify(a,null,2))"
-          cat app.json | head -15
-          eas build -p android --profile preview --non-interactive --no-wait
+          node -e "var f=require('fs'),a=JSON.parse(f.readFileSync('app.json','utf8'));a.expo.owner='pyraminx';a.expo.slug='vitalis-ia';a.expo.extra=a.expo.extra||{};a.expo.extra.eas={projectId:'968e5777-0456-4013-a3fd-56692d2690b5'};f.writeFileSync('app.json',JSON.stringify(a,null,2))"
+
+      - name: Build APK and get URL
+        id: build
+        run: |
+          BUILD_OUTPUT=$(eas build -p android --profile preview --non-interactive --json 2>&1 | tail -1)
+          echo "$BUILD_OUTPUT"
+          APK_URL=$(echo "$BUILD_OUTPUT" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const b=JSON.parse(d);console.log(b[0].artifacts.buildUrl||b[0].artifacts.url||'')}catch{console.log('')}})")
+          echo "apk_url=$APK_URL" >> $GITHUB_OUTPUT
+
+      - name: Download APK
+        if: steps.build.outputs.apk_url != ''
+        run: |
+          curl -L "${{ steps.build.outputs.apk_url }}" -o vitalis-ai.apk
+          ls -lh vitalis-ai.apk
+
+      - name: Upload APK to GitHub
+        if: steps.build.outputs.apk_url != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vitalis-AI-APK
+          path: vitalis-ai.apk
+          retention-days: 30
