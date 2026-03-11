@@ -19,35 +19,33 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup Expo and EAS
-        uses: expo/expo-github-action@v8
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+          distribution: temurin
+          java-version: 17
 
       - name: Install dependencies
         run: npm ci || npm install
 
-      - name: Configure project
-        run: |
-          node -e "var f=require('fs'),a=JSON.parse(f.readFileSync('app.json','utf8'));a.expo.owner='pyraminx';a.expo.slug='vitalis-ia';a.expo.extra=a.expo.extra||{};a.expo.extra.eas={projectId:'968e5777-0456-4013-a3fd-56692d2690b5'};f.writeFileSync('app.json',JSON.stringify(a,null,2))"
+      - name: Generate native Android project
+        run: npx expo prebuild --platform android --no-install
 
-      - name: Build APK and get URL
-        id: build
-        run: |
-          BUILD_OUTPUT=$(eas build -p android --profile preview --non-interactive --json 2>&1 | tail -1)
-          echo "$BUILD_OUTPUT"
-          APK_URL=$(echo "$BUILD_OUTPUT" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const b=JSON.parse(d);console.log(b[0].artifacts.buildUrl||b[0].artifacts.url||'')}catch{console.log('')}})")
-          echo "apk_url=$APK_URL" >> $GITHUB_OUTPUT
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
 
-      - name: Download APK
-        if: steps.build.outputs.apk_url != ''
+      - name: Build APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Find and rename APK
         run: |
-          curl -L "${{ steps.build.outputs.apk_url }}" -o vitalis-ai.apk
+          APK_PATH=$(find android -name "*.apk" -path "*/release/*" | head -1)
+          echo "Found APK at: $APK_PATH"
+          cp "$APK_PATH" vitalis-ai.apk
           ls -lh vitalis-ai.apk
 
-      - name: Upload APK to GitHub
-        if: steps.build.outputs.apk_url != ''
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Vitalis-AI-APK
