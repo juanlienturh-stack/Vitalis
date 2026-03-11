@@ -40,54 +40,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ─── AUTH ──────────────────────────────────────────────────────────────────
 
   app.get("/api/auth/check-username/:username", async (req: Request, res: Response) => {
-    const username = req.params.username?.trim().toLowerCase();
-    if (!username || username.length < 3) return res.json({ available: false, error: "Mínimo 3 caracteres" });
-    if (!/^[a-z0-9_]+$/.test(username)) return res.json({ available: false, error: "Solo letras, números y guion bajo" });
-    const result = await pool.query("SELECT id FROM users WHERE username = $1", [username]);
-    return res.json({ available: result.rows.length === 0 });
+    try {
+      const username = req.params.username?.trim().toLowerCase();
+      if (!username || username.length < 3) return res.json({ available: false, error: "Mínimo 3 caracteres" });
+      if (!/^[a-z0-9_]+$/.test(username)) return res.json({ available: false, error: "Solo letras, números y guion bajo" });
+      const result = await pool.query("SELECT id FROM users WHERE username = $1", [username]);
+      return res.json({ available: result.rows.length === 0 });
+    } catch (e: any) {
+      console.error("Check username error:", e.message);
+      return res.json({ available: false, error: "Error de servidor" });
+    }
   });
 
   app.post("/api/auth/register", async (req: Request, res: Response) => {
-    const { username, name, age, gender, height, weight, goalWeight, activityLevel, goal } = req.body;
-    if (!username || !name) return res.status(400).json({ error: "Usuario y nombre requeridos" });
-    const clean = username.trim().toLowerCase();
-    if (clean.length < 3) return res.status(400).json({ error: "Mínimo 3 caracteres" });
-    if (!/^[a-z0-9_]+$/.test(clean)) return res.status(400).json({ error: "Solo letras, números y guion bajo" });
-
     try {
+      const { username, name, age, gender, height, weight, goalWeight, activityLevel, goal } = req.body;
+      if (!username) return res.status(400).json({ error: "Usuario requerido" });
+      const clean = username.trim().toLowerCase();
+      const displayName = name || clean;
+      if (clean.length < 3) return res.status(400).json({ error: "Mínimo 3 caracteres" });
+      if (!/^[a-z0-9_]+$/.test(clean)) return res.status(400).json({ error: "Solo letras, números y guion bajo" });
+
       const existing = await pool.query("SELECT id FROM users WHERE username = $1", [clean]);
       if (existing.rows.length > 0) return res.status(409).json({ error: "Nombre de usuario ya existe" });
 
+      const existingEmail = await pool.query("SELECT id FROM users WHERE email = $1", [clean + "@vitalis.app"]);
+      if (existingEmail.rows.length > 0) return res.status(409).json({ error: "Nombre de usuario ya existe" });
+
+      const email = clean + "@vitalis.app";
       const result = await pool.query(
-        `INSERT INTO users (username, name, age, gender, height, weight, goal_weight, activity_level, goal)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-        [clean, name, age || 25, gender || "other", height || 175, weight || 75, goalWeight || 70, activityLevel || "moderate", goal || "maintain"]
+        `INSERT INTO users (username, name, email, age, gender, height, weight, goal_weight, activity_level, goal)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+        [clean, displayName, email, age || 25, gender || "other", height || 175, weight || 75, goalWeight || 70, activityLevel || "moderate", goal || "maintain"]
       );
       const user = result.rows[0];
-      const token = signToken({ userId: user.id, email: clean + "@vitalis.app", name: user.name });
+      const token = signToken({ userId: user.id, email, name: user.name });
       return res.json({ token, user: { id: user.id, username: clean, name: user.name } });
     } catch (e: any) {
+      console.error("Register error:", e.message, e.code, e.detail);
       if (e.code === "23505") return res.status(409).json({ error: "Nombre de usuario ya existe" });
-      return res.status(500).json({ error: "Error al crear usuario" });
+      return res.status(500).json({ error: "Error al crear usuario: " + (e.message || "desconocido") });
     }
   });
 
   app.post("/api/auth/login", async (req: Request, res: Response) => {
-    const { username } = req.body;
-    if (!username) return res.status(400).json({ error: "Usuario requerido" });
-    const clean = username.trim().toLowerCase();
-    const result = await pool.query("SELECT * FROM users WHERE username = $1", [clean]);
-    if (result.rows.length === 0) return res.status(404).json({ error: "Usuario no encontrado" });
-    const user = result.rows[0];
-    const token = signToken({ userId: user.id, email: clean + "@vitalis.app", name: user.name });
-    return res.json({
-      token, user: {
-        id: user.id, username: clean, name: user.name,
-        age: user.age, gender: user.gender, height: parseFloat(user.height),
-        weight: parseFloat(user.weight), goalWeight: parseFloat(user.goal_weight),
-        activityLevel: user.activity_level, goal: user.goal,
-      }
-    });
+    try {
+      const { username } = req.body;
+      if (!username) return res.status(400).json({ error: "Usuario requerido" });
+      const clean = username.trim().toLowerCase();
+      const result = await pool.query("SELECT * FROM users WHERE username = $1", [clean]);
+      if (result.rows.length === 0) return res.status(404).json({ error: "Usuario no encontrado. ¿Quieres registrarte?" });
+      const user = result.rows[0];
+      const token = signToken({ userId: user.id, email: user.email || clean + "@vitalis.app", name: user.name });
+      return res.json({
+        token, user: {
+          id: user.id, username: user.username || clean, name: user.name,
+          age: user.age, gender: user.gender,
+          height: user.height ? parseFloat(user.height) : 175,
+          weight: user.weight ? parseFloat(user.weight) : 75,
+          goalWeight: user.goal_weight ? parseFloat(user.goal_weight) : 70,
+          activityLevel: user.activity_level || "moderate",
+          goal: user.goal || "maintain",
+        }
+      });
+    } catch (e: any) {
+      console.error("Login error:", e.message);
+      return res.status(500).json({ error: "Error al iniciar sesión" });
+    }
   });
 
   app.post("/api/auth/google", async (req: Request, res: Response) => {

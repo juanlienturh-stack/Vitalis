@@ -91,14 +91,26 @@ export default function LoginScreen({ onAuth }: Props) {
 
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || "Error al procesar");
+        if (res.status === 404 && mode === "login") {
+          setError("Usuario no encontrado. Cámbiate a Registrarse.");
+        } else if (res.status === 409 && mode === "register") {
+          setError("Ya existe. Cámbiate a Iniciar Sesión.");
+        } else {
+          setError(data.error || "Error al procesar");
+        }
+        return;
+      }
+
+      if (!data.token || !data.user) {
+        setError("Respuesta inesperada del servidor");
         return;
       }
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       onAuth(data.user, data.token);
-    } catch {
-      setError("Error de conexión");
+    } catch (e: any) {
+      console.log("Auth error:", e?.message || e);
+      setError("Error de conexión. Verifica tu internet.");
     } finally {
       setLoading(false);
     }
